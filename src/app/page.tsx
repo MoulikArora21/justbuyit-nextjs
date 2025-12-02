@@ -1,65 +1,334 @@
+"use client";
+import { useRef, useEffect, useState } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/all";
+import useDebounce from "@/hooks/useDebounce";
+import { useRouter } from "next/navigation";
+import Paginator from "@/components/common/Paginator";
+import { Product } from "@/types/product";
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+const Home = () => {
+  // Animation Refs and GSAP setup
+  gsap.registerPlugin(ScrollTrigger);
+  const page1Ref = useRef<HTMLDivElement | null>(null);
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const productListRef = useRef<HTMLDivElement | null>(null);
+  const { contextSafe } = useGSAP({ scope: productListRef });
+  const productRefs = useRef<Record<number, HTMLElement | null>>({});
+
+  // State Variables
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const itemsPerPage = 9;
+  const [productsToShow, setProductsToShow] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [data, setData] = useState<Product[]>([]);
+  // GSAP Animations
+  useGSAP(
+    () => {
+      const tl = gsap.timeline({
+        repeat: -1,
+        yoyo: true,
+        repeatDelay: 1,
+        delay: 1,
+        ease: "linear",
+      });
+      tlRef.current = tl;
+      tl.fromTo(
+        ".marquee-row-1",
+        {
+          x: "50vw",
+          duration: 10,
+        },
+        {
+          x: "-80%",
+          ease: "none",
+          duration: 10,
+        }
+      );
+      tl.fromTo(
+        ".marquee-row-2",
+        {
+          x: "-80%",
+          duration: 10,
+        },
+        {
+          x: "10%",
+          ease: "none",
+          duration: 10,
+        },
+        0
+      );
+      tl.fromTo(
+        ".marquee-row-3",
+        {
+          x: "50vw",
+          duration: 10,
+        },
+        {
+          x: "-80%",
+          ease: "none",
+          duration: 10,
+        },
+        0
+      );
+    },
+    { scope: page1Ref }
   );
-}
+
+  // Scroll-triggered GSAP Animation to change navbar and body colors
+  useGSAP(() => {
+    const tl2 = gsap.timeline({
+      scrollTrigger: {
+        trigger: page1Ref.current,
+        start: "top 100px",
+        end: "+=2000",
+        scrub: 2,
+        pin: true,
+      },
+    });
+    tl2.to(
+      ".navbar-wrapper",
+      {
+        backgroundColor: "black",
+        duration: 1,
+        ease: "power2.inOut",
+      },
+      0
+    );
+    tl2.to(
+      "body",
+      {
+        backgroundColor: "black",
+        duration: 1,
+        ease: "power2.inOut",
+      },
+      0
+    );
+    tl2.to(".navbar-wrapper", {
+      color: "white",
+      borderColor: "white",
+      duration: 1,
+      ease: "power2.inOut",
+    });
+  });
+
+  // ScrollTrigger to pause and resume marquee animation
+  ScrollTrigger.create({
+    trigger: page1Ref.current,
+    start: "350%",
+    onEnter: () => tlRef.current?.paused(true),
+    onLeaveBack: () => tlRef.current?.paused(false),
+  });
+
+  // Function to filter products based on current page
+  const filterProductsByPage = (
+    products: Product[],
+    page: number,
+    itemsPerPage: number
+  ) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return products.slice(startIndex, endIndex);
+  };
+
+  // Function to Fetch All products from API
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(`https://api.escuelajs.co/api/v1/products`);
+      const fetchedData = await response.json();
+      console.log(fetchedData);
+      setData(fetchedData);
+      setMaxPage(Math.ceil(fetchedData.length / itemsPerPage));
+      setProductsToShow(filterProductsByPage(fetchedData, 1, itemsPerPage));
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+  // Fetch products on component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Update products to show when page changes
+  useEffect(() => {
+    setProductsToShow(filterProductsByPage(data, page, itemsPerPage));
+  }, [page, data]);
+
+  // Hover product
+  const hoverProduct = contextSafe((id: number) => {
+    if (productRefs.current[id]) {
+      gsap.to(productRefs.current[id], {
+        scale: 1.05,
+        boxShadow: "0px 4px 15px rgba(255, 255, 255, 0.58)",
+        duration: 0.3,
+      });
+    }
+  });
+
+  // Unhover product
+  const unhoverProduct = contextSafe((id: number) => {
+    if (productRefs.current[id]) {
+      gsap.to(productRefs.current[id], {
+        scale: 1,
+        boxShadow: "none",
+        duration: 0.3,
+      });
+    }
+  });
+
+  // Handle search input change
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+
+  // Filter products based on debounced search term
+  useEffect(() => {
+    const filteredProducts = debouncedSearchTerm
+      ? data.filter((product) =>
+          product.title
+            .toLowerCase()
+            .includes(debouncedSearchTerm.toLowerCase())
+        )
+      : data;
+
+    setMaxPage(Math.ceil(filteredProducts.length / itemsPerPage));
+    setPage(1);
+    setProductsToShow(filterProductsByPage(filteredProducts, 1, itemsPerPage));
+  }, [debouncedSearchTerm]);
+
+  // Handle product click to navigate to product detail page
+  const handleProductClick = (productId: number) => {
+    router.push(`/product/${productId}`);
+  };
+
+  return (
+    <>
+      <div>
+        <div ref={page1Ref} className="page1">
+          <div className="marquee-row marquee-row-1">
+            <span className="marquee-text">
+              <span className="highlight-letter">B</span>IG
+            </span>
+            <span className="marquee-text">SALE</span>
+            <span className="marquee-text">SHOP</span>
+            <span className="marquee-text">DEALS</span>
+            <span className="marquee-text">TRENDING</span>
+            <span className="marquee-text">PREMIUM</span>
+            <span className="marquee-text">SALE</span>
+            <span className="marquee-text">SHOP</span>
+            <span className="marquee-text">BIG DEALS</span>
+            <span className="marquee-text">TRENDING</span>
+            <span className="marquee-text">FASHION</span>
+            <span className="marquee-text">TODAY</span>
+            <span className="marquee-text">
+              FASHIO<span className="highlight-letter">N</span>
+            </span>
+          </div>
+          <div className="marquee-row marquee-row-2">
+            <span className="marquee-text">GREAT!</span>
+            <span className="marquee-text">
+              <span className="highlight-letter">O</span>FFERS
+            </span>
+            <span className="marquee-text">LIMITED</span>
+            <span className="marquee-text">PREMIUM</span>
+            <span className="marquee-text">OFFERS</span>
+            <span className="marquee-text">DISCOUNT</span>
+            <span className="marquee-text">LIMITED</span>
+            <span className="marquee-text">EXCLUSIVE</span>
+            <span className="marquee-text">PREMIUM</span>
+            <span className="marquee-text">SHOP</span>
+            <span className="marquee-text">OFFERS</span>
+            <span className="marquee-text">
+              FOR YO<span className="highlight-letter">U</span>
+            </span>
+          </div>
+
+          <div className="marquee-row marquee-row-3">
+            <span className="marquee-text">
+              <span className="highlight-letter">Y</span>EAR ROUND
+            </span>
+            <span className="marquee-text">BEST</span>
+            <span className="marquee-text">PRICES</span>
+            <span className="marquee-text">TODAY</span>
+            <span className="marquee-text">AWESOME</span>
+            <span className="marquee-text">AMAZING</span>
+            <span className="marquee-text">BEST</span>
+            <span className="marquee-text">PRICE</span>
+            <span className="marquee-text">TODAY</span>
+            <span className="marquee-text">AWESOME</span>
+            <span className="marquee-text">AMAZING</span>
+            <span className="marquee-text">
+              FLO<span className="highlight-letter">W</span>
+            </span>
+          </div>
+
+          <div className="leftimage">
+            <img className="main-image" src="./pants.png" alt="left image" />
+            <img className="image-part1" src="./pants1.png" alt="" />
+            <img className="image-part2" src="./pants2.png" alt="" />
+            <img className="image-part3" src="./pants3.png" alt="" />
+          </div>
+
+          <div className="rightimage">
+            <img className="main-image" src="./hoodie.png" alt="right image" />
+            <img className="image-part1" src="./hoodie1.png" alt="" />
+            <img className="image-part2" src="./hoodie2.png" alt="" />
+            <img className="image-part3" src="./hoodie3.png" alt="" />
+          </div>
+        </div>
+      </div>
+
+      <div className="page2">
+        <h1 className="products-heading" ref={productListRef}>
+          BROWSE PRODUCTS
+        </h1>
+
+        <div className="products">
+          <div className="search-bar">
+            <input
+              className="search-box"
+              type="text"
+              placeholder="SEARCH PRODUCTS..."
+              onChange={handleChange}
+            />
+          </div>
+          <Paginator page={page} maxPage={maxPage} setPage={setPage} />
+          {productsToShow.map((product) => (
+            <div
+              key={product.id}
+              ref={(el) => {
+                productRefs.current[product.id] = el;
+              }}
+              className="product-card"
+              onMouseEnter={() => hoverProduct(product.id)}
+              onMouseLeave={() => unhoverProduct(product.id)}
+              onClick={() => handleProductClick(product.id)}
+            >
+              <img
+                src={product.images[0]}
+                alt={product.title}
+                className="product-image"
+              />
+              <div className="product-details">
+                <h2 className="product-title" title={product.title}>
+                  <span className="title-text">{product.title}</span>
+                </h2>
+                <p className="product-price">€ {product.price}</p>
+                <p className="product-category">{product.category.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Paginator page={page} maxPage={maxPage} setPage={setPage} />
+      </div>
+    </>
+  );
+};
+
+export default Home;

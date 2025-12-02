@@ -1,15 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const flemmatico = localFont({
+  src: [
+    { path: "./fonts/Flemmatico Thin.woff2", weight: "200", style: "normal" },
+    { path: "./fonts/Flemmatico Light.woff2", weight: "300", style: "normal" },
+    {
+      path: "./fonts/Flemmatico Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/Flemmatico Semibold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    { path: "./fonts/Flemmatico Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Flemmatico Black.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-flemmatico",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -24,10 +37,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <head>
+        <link
+          href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={`${flemmatico.variable} antialiased`}>
+        <Header />
+        <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
