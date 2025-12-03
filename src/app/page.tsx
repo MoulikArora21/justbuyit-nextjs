@@ -139,12 +139,13 @@ const Home = () => {
   // Function to Fetch All products from API
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`https://api.escuelajs.co/api/v1/products`);
-      const fetchedData = await response.json();
-      console.log(fetchedData);
-      setData(fetchedData);
-      setMaxPage(Math.ceil(fetchedData.length / itemsPerPage));
-      setProductsToShow(filterProductsByPage(fetchedData, 1, itemsPerPage));
+      fetch(`https://api.escuelajs.co/api/v1/products`)
+        .then((res) => res.json())
+        .then((fetchedData) => {
+          setData(fetchedData);
+          setMaxPage(Math.ceil(fetchedData.length / itemsPerPage));
+          setProductsToShow(filterProductsByPage(fetchedData, 1, itemsPerPage));
+        });
     } catch (error) {
       console.error("Error fetching products:", error);
     }
@@ -159,28 +160,6 @@ const Home = () => {
   useEffect(() => {
     setProductsToShow(filterProductsByPage(data, page, itemsPerPage));
   }, [page, data]);
-
-  // Hover product
-  const hoverProduct = contextSafe((id: number) => {
-    if (productRefs.current[id]) {
-      gsap.to(productRefs.current[id], {
-        scale: 1.05,
-        boxShadow: "0px 4px 15px rgba(255, 255, 255, 0.58)",
-        duration: 0.3,
-      });
-    }
-  });
-
-  // Unhover product
-  const unhoverProduct = contextSafe((id: number) => {
-    if (productRefs.current[id]) {
-      gsap.to(productRefs.current[id], {
-        scale: 1,
-        boxShadow: "none",
-        duration: 0.3,
-      });
-    }
-  });
 
   // Handle search input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,15 +285,15 @@ const Home = () => {
                 productRefs.current[product.id] = el;
               }}
               className="product-card"
-              onMouseEnter={() => hoverProduct(product.id)}
-              onMouseLeave={() => unhoverProduct(product.id)}
               onClick={() => handleProductClick(product.id)}
             >
-              <img
-                src={product.images[0]}
-                alt={product.title}
-                className="product-image"
-              />
+              <div className="product-image-container">
+                <img
+                  src={product.images[0]}
+                  alt={product.title}
+                  className="product-image"
+                />
+              </div>
               <div className="product-details">
                 <h2 className="product-title" title={product.title}>
                   <span className="title-text">{product.title}</span>
