@@ -2,12 +2,12 @@
 import { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/all";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useDebounce from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Paginator from "@/components/common/Paginator";
+import ProductCardLoading from "@/components/loading/ProductCardLoading";
 import { Product } from "@/types/product";
-import Image from "next/image";
 
 const Home = () => {
   // Animation Refs and GSAP setup
@@ -27,6 +27,8 @@ const Home = () => {
   const router = useRouter();
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [data, setData] = useState<Product[]>([]);
+  const [filteredData, setFilteredData] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   // GSAP Animations
   useGSAP(
     () => {
@@ -115,14 +117,13 @@ const Home = () => {
       duration: 1,
       ease: "power2.inOut",
     });
-  });
 
-  // ScrollTrigger to pause and resume marquee animation
-  ScrollTrigger.create({
-    trigger: page1Ref.current,
-    start: "350%",
-    onEnter: () => tlRef.current?.paused(true),
-    onLeaveBack: () => tlRef.current?.paused(false),
+    ScrollTrigger.create({
+      trigger: page1Ref.current,
+      start: "350%",
+      onEnter: () => tlRef.current?.paused(true),
+      onLeaveBack: () => tlRef.current?.paused(false),
+    });
   });
 
   // Function to filter products based on current page
@@ -137,18 +138,21 @@ const Home = () => {
   };
 
   // Function to Fetch All products from API
-  const fetchProducts = async () => {
-    try {
-      fetch(`https://api.escuelajs.co/api/v1/products`)
-        .then((res) => res.json())
-        .then((fetchedData) => {
-          setData(fetchedData);
-          setMaxPage(Math.ceil(fetchedData.length / itemsPerPage));
-          setProductsToShow(filterProductsByPage(fetchedData, 1, itemsPerPage));
-        });
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
+  const fetchProducts = () => {
+    setLoading(true);
+    fetch(`https://api.escuelajs.co/api/v1/products`)
+      .then((res) => res.json())
+      .then((fetchedData) => {
+        setData(fetchedData);
+        setFilteredData(fetchedData);
+        setMaxPage(Math.ceil(fetchedData.length / itemsPerPage));
+        setProductsToShow(filterProductsByPage(fetchedData, 1, itemsPerPage));
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+        setLoading(false);
+      });
   };
 
   // Fetch products on component mount
@@ -158,8 +162,8 @@ const Home = () => {
 
   // Update products to show when page changes
   useEffect(() => {
-    setProductsToShow(filterProductsByPage(data, page, itemsPerPage));
-  }, [page, data]);
+    setProductsToShow(filterProductsByPage(filteredData, page, itemsPerPage));
+  }, [page, filteredData]);
 
   // Handle search input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,10 +179,9 @@ const Home = () => {
             .includes(debouncedSearchTerm.toLowerCase())
         )
       : data;
-
+    setFilteredData(filteredProducts);
     setMaxPage(Math.ceil(filteredProducts.length / itemsPerPage));
     setPage(1);
-    setProductsToShow(filterProductsByPage(filteredProducts, 1, itemsPerPage));
   }, [debouncedSearchTerm]);
 
   // Handle product click to navigate to product detail page
@@ -275,34 +278,58 @@ const Home = () => {
               type="text"
               placeholder="SEARCH PRODUCTS..."
               onChange={handleChange}
+              value={searchTerm}
             />
           </div>
           <Paginator page={page} maxPage={maxPage} setPage={setPage} />
-          {productsToShow.map((product) => (
-            <div
-              key={product.id}
-              ref={(el) => {
-                productRefs.current[product.id] = el;
-              }}
-              className="product-card"
-              onClick={() => handleProductClick(product.id)}
-            >
-              <div className="product-image-container">
-                <img
-                  src={product.images[0]}
-                  alt={product.title}
-                  className="product-image"
-                />
-              </div>
-              <div className="product-details">
-                <h2 className="product-title" title={product.title}>
-                  <span className="title-text">{product.title}</span>
-                </h2>
-                <p className="product-price">€ {product.price}</p>
-                <p className="product-category">{product.category.name}</p>
-              </div>
+          {loading ? (
+            <>
+              {Array.from({ length: 9 }).map((_, index) => (
+                <ProductCardLoading key={index} />
+              ))}
+            </>
+          ) : productsToShow.length === 0 ? (
+            <div className="error-state">
+              <i className="ri-search-line error-icon"></i>
+              <h2 className="error-message">No Products Found</h2>
+              <p className="error-description">
+                We couldn't find any products matching your search. Try
+                different keywords or browse all products.
+              </p>
+              <button
+                className="error-button"
+                onClick={() => setSearchTerm("")}
+              >
+                Clear Search
+              </button>
             </div>
-          ))}
+          ) : (
+            productsToShow.map((product) => (
+              <div
+                key={product.id}
+                ref={(el) => {
+                  productRefs.current[product.id] = el;
+                }}
+                className="product-card"
+                onClick={() => handleProductClick(product.id)}
+              >
+                <div className="product-image-container">
+                  <img
+                    src={product.images[0]}
+                    alt={product.title}
+                    className="product-image"
+                  />
+                </div>
+                <div className="product-details">
+                  <h2 className="product-title" title={product.title}>
+                    <span className="title-text">{product.title}</span>
+                  </h2>
+                  <p className="product-price">€ {product.price}</p>
+                  <p className="product-category">{product.category.name}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
         <Paginator page={page} maxPage={maxPage} setPage={setPage} />
       </div>

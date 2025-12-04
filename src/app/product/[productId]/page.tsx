@@ -5,6 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { useRef, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Product } from "@/types/product";
+import ProductPageLoading from "@/components/loading/ProductPageLoading";
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -12,6 +13,7 @@ const ProductPage = () => {
   const productPageRef = useRef<HTMLDivElement | null>(null);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const mainImageRef = useRef(null);
@@ -29,19 +31,31 @@ const ProductPage = () => {
 
   // Fetch product details
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `https://api.escuelajs.co/api/v1/products/${productId}`
-        );
-        const data = await response.json();
-        setCurrentProduct(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching product:", error);
-        setLoading(false);
-      }
+    const fetchProduct = () => {
+      setLoading(true);
+      fetch(`https://api.escuelajs.co/api/v1/products/${productId}`)
+        .then((response) => {
+          if (!response.ok) {
+            setLoading(false);
+            setError("Product not found");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (!data || !data.id) {
+            console.error("Invalid product data, redirecting to homepage");
+            setError("Invalid product data");
+            setLoading(false);
+            return;
+          }
+          setCurrentProduct(data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching product:", error);
+          setLoading(false);
+          setError("Error fetching product");
+        });
     };
 
     fetchProduct();
@@ -76,17 +90,22 @@ const ProductPage = () => {
   const handleBuyNow = () => {};
 
   if (loading) {
-    return (
-      <div className="product-page" ref={productPageRef}>
-        <div className="loading-spinner">LOADING...</div>
-      </div>
-    );
+    return <ProductPageLoading />;
   }
 
-  if (!currentProduct) {
+  if (error || !currentProduct) {
     return (
       <div className="product-page" ref={productPageRef}>
-        <div className="error-message">PRODUCT NOT FOUND</div>
+        <div className="error-state">
+          <i className="ri-error-warning-line error-icon"></i>
+          <h2 className="error-message">Product Not Found</h2>
+          <p className="error-description">
+            {error || "The product you are looking for does not exist."}
+          </p>
+          <button className="error-button" onClick={() => router.push("/")}>
+            Back to Shop
+          </button>
+        </div>
       </div>
     );
   }

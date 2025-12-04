@@ -4,7 +4,10 @@ const ProductPageLoading = () => {
       <div className="product-wrapper-loading">
         <div className="product-images-loading">
           <div className="main-product-image-loading"></div>
-          <div className="product-mini-images-loading"></div>
+          <div className="product-mini-images-loading">
+            <div className="product-mini-image-loading"></div>
+            <div className="product-mini-image-loading"></div>
+          </div>
         </div>
 
         <div className="product-information-loading">
@@ -13,7 +16,8 @@ const ProductPageLoading = () => {
           <div className="product-detail-price-loading"></div>
 
           <div className="product-description-loading">
-            <div className="description-heading-loading"></div>
+            <div className="description-text-loading"></div>
+            <div className="description-text-loading"></div>
             <div className="description-text-loading"></div>
           </div>
 
@@ -24,11 +28,10 @@ const ProductPageLoading = () => {
               <div className="add-to-cart-button-loading"></div>
               <div className="buy-now-button-loading"></div>
             </div>
+            <div className="back-button-loading"></div>
           </div>
         </div>
       </div>
-
-      <div className="back-button-loading"></div>
     </div>
   );
 };
