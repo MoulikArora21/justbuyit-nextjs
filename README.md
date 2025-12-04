@@ -17,8 +17,8 @@ An e-commerce product listing app built with Next.js and TypeScript.
 
 ## Built With
 
-- Next.js 16
-- React 19
+- Next.js
+- React
 - TypeScript
 - Custom CSS (no Tailwind)
 - GSAP for animations
