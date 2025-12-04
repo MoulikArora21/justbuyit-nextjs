@@ -4,7 +4,7 @@ An e-commerce product listing app built with Next.js and TypeScript.
 
 **Live Demo:** [https://justbuyit-nextjs.vercel.app/](https://justbuyit-nextjs.vercel.app/)
 
-**Note:** The app uses a public test API (Platzi Fake Store API), so sometimes products might have weird or inappropriate content. This is because anyone can add data to that API.
+**Note:** The app uses a public test API (Platzi Fake Store API), so sometimes products might have weird or inappropriate or missing content. This is because anyone can add or delete data using that API.
 
 ## What It Does
 
