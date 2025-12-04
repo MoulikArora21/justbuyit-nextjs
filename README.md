@@ -59,7 +59,7 @@ Run tests with `npm run test`
 
 ## Task Requirements
 
-This was the internship task. Here's what was asked and what I did:
+This was the assigned task. Here's what was asked and what I did:
 
 **Main Task - Done:**
 
